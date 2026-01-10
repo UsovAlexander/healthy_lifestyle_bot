@@ -43,13 +43,9 @@ def calculate_workout_calories(workout_type: str, duration: int, weight: float) 
     }
     
     met = met_values.get(workout_type.lower(), 5.0)
-    # Формула: калории = MET * вес (кг) * время (часы)
+
     calories_burned = met * weight * (duration / 60)
     return round(calories_burned)
 
 def get_workout_water_recommendation(duration: int) -> float:
-    """
-    Рекомендация по воде для тренировки
-    """
-    # 200 мл за каждые 30 минут тренировки
     return (duration // 30) * 200
