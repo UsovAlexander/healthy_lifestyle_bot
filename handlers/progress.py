@@ -3,6 +3,7 @@ from aiogram.filters import Command
 from aiogram.types import Message, BufferedInputFile
 from database import get_user
 from services.chart import create_progress_chart
+from services.recommendations import get_low_calorie_recommendations
 
 router = Router()
 
@@ -64,7 +65,36 @@ async def cmd_check_progress(message: Message):
         
     except Exception as e:
         print(f"Ошибка при создании графика: {e}")
-        await message.answer("⚠️ Не удалось создать график прогресса.")
+        await message.answer("Не удалось создать график прогресса.")
+        
+
+@router.message(Command("food_tips"))
+async def cmd_food_tips(message: Message):
+    user = await get_user(message.from_user.id)
+    
+    if not user:
+        await message.answer("Профиль не найден. Используйте /set_profile для создания.")
+        return
+    
+    calorie_balance = user['logged_calories'] - user['burned_calories']
+    remaining_calories = max(0, user['calorie_goal'] - calorie_balance)
+    
+    food_recommendations = get_low_calorie_recommendations(remaining_calories)
+    
+    response = (
+        f"СОВЕТЫ ПО ПИТАНИЮ\n\n"
+        f"Ваша ситуация:\n"
+        f"• Осталось калорий: {remaining_calories:.0f}\n"
+        f"• Потреблено: {user['logged_calories']:.0f} ккал\n"
+        f"• Сожжено: {user['burned_calories']:.0f} ккал\n\n"
+    )
+    
+    if remaining_calories > 0:
+        response += f"Низкокалорийные продукты ({remaining_calories:.0f} ккал осталось):\n"
+        for food in food_recommendations:
+            response += f"• {food}\n"
+
+    await message.answer(response)
 
 @router.message(Command("help"))
 async def cmd_help(message: Message):

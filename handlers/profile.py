@@ -33,6 +33,7 @@ async def cmd_start(message: Message):
         "/log_food <продукт> - Записать съеденную еду\n"
         "/log_workout <тип> <минуты> - Записать тренировку\n"
         "/check_progress - Проверить прогресс\n"
+        "/food_tips - Рекомендации продуктов с калорийностью\n"
         "/help - Помощь"
     )
 
@@ -262,6 +263,7 @@ async def process_calorie_confirmation(message: Message, state: FSMContext):
         f"/log_food <продукт> - записать еду\n"
         f"/log_workout <тип> <минуты> - записать тренировку\n"
         f"/check_progress - проверить прогресс\n"
+        f"/food_tips - Рекомендации продуктов с калорийностью\n"
         f"/profile - посмотреть профиль"
     )
     
