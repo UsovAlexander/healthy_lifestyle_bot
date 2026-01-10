@@ -5,7 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 from services.calculations import calculate_calorie_goal, calculate_water_goal, calculate_bmr
 from services.weather import get_weather
-from database.db import create_or_update_user, get_user
+from database import create_or_update_user, get_user
 
 router = Router()
 

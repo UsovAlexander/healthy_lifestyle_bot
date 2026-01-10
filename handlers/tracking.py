@@ -3,9 +3,9 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from services.food_api import get_food_info
+from services.food import get_food_info
 from services.calculations import calculate_workout_calories, get_workout_water_recommendation
-from database.db import log_water, log_food, log_workout, get_user
+from database import log_water, log_food, log_workout, get_user
 
 router = Router()
 

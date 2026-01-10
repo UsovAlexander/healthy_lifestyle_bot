@@ -1,7 +1,7 @@
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
-from database.db import get_user
+from database import get_user
 
 router = Router()
 
