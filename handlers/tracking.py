@@ -14,9 +14,7 @@ class FoodStates(StatesGroup):
 
 @router.message(Command("log_water"))
 async def cmd_log_water(message: Message):
-    """Логирование выпитой воды"""
     try:
-        # Получаем количество из аргументов команды
         args = message.text.split()
         if len(args) < 2:
             await message.answer("Используйте: /log_water <количество в мл>\nПример: /log_water 500")
@@ -27,10 +25,8 @@ async def cmd_log_water(message: Message):
             await message.answer("Пожалуйста, введите положительное количество.")
             return
         
-        # Логируем
         await log_water(message.from_user.id, amount)
         
-        # Получаем обновленные данные пользователя
         user = await get_user(message.from_user.id)
         if user:
             remaining = max(0, user['water_goal'] - user['logged_water'])
@@ -49,7 +45,6 @@ async def cmd_log_water(message: Message):
 
 @router.message(Command("log_food"))
 async def cmd_log_food(message: Message, state: FSMContext):
-    """Логирование съеденной еды"""
     try:
         args = message.text.split(maxsplit=1)
         if len(args) < 2:
@@ -58,12 +53,11 @@ async def cmd_log_food(message: Message, state: FSMContext):
         
         product_name = args[1]
         
-        # Получаем информацию о продукте
         food_info = await get_food_info(product_name)
         
         if not food_info.get('success', False):
             await message.answer(
-                f"⚠️ Не удалось получить информацию о продукте '{product_name}'.\n"
+                f"Не удалось получить информацию о продукте '{product_name}'.\n"
                 f"Ошибка: {food_info.get('error', 'Неизвестная ошибка')}\n\n"
                 f"Пожалуйста, введите количество калорий вручную на 100г:"
             )
@@ -74,14 +68,13 @@ async def cmd_log_food(message: Message, state: FSMContext):
             await state.set_state(FoodStates.waiting_for_grams)
             return
         
-        # Сохраняем информацию о продукте
         await state.update_data(
             food_name=food_info['name'],
             calories_per_100g=food_info['calories']
         )
         
         await message.answer(
-            f"🍎 {food_info['name']} — {food_info['calories']} ккал на 100 г.\n"
+            f"{food_info['name']} — {food_info['calories']} Ккал на 100 г.\n"
             f"Сколько грамм вы съели?"
         )
         await state.set_state(FoodStates.waiting_for_grams)
@@ -91,28 +84,23 @@ async def cmd_log_food(message: Message, state: FSMContext):
 
 @router.message(FoodStates.waiting_for_grams)
 async def process_food_grams(message: Message, state: FSMContext):
-    """Обработка введенных грамм продукта"""
     try:
         grams = float(message.text)
         if grams <= 0:
             await message.answer("Пожалуйста, введите положительное количество грамм.")
             return
         
-        # Получаем данные из состояния
         data = await state.get_data()
         food_name = data['food_name']
         calories_per_100g = data.get('calories_per_100g')
         
-        # Если калорийность не получена из API, запрашиваем вручную
         if calories_per_100g is None:
             await message.answer("Введите калорийность продукта на 100г:")
             await state.update_data(grams=grams)
             return
         
-        # Рассчитываем калории
         calories = (calories_per_100g * grams) / 100
         
-        # Логируем в БД
         await log_food(
             user_id=message.from_user.id,
             food_name=food_name,
@@ -120,19 +108,18 @@ async def process_food_grams(message: Message, state: FSMContext):
             grams=grams
         )
         
-        # Получаем обновленные данные пользователя
         user = await get_user(message.from_user.id)
         if user:
             remaining = max(0, user['calorie_goal'] - user['logged_calories'])
             
             await message.answer(
-                f"✅ Записано: {food_name} — {calories:.1f} ккал ({grams} г)\n"
-                f"Всего сегодня: {user['logged_calories']:.0f} ккал\n"
-                f"Цель: {user['calorie_goal']} ккал\n"
-                f"Осталось: {remaining:.0f} ккал"
+                f"Записано: {food_name} — {calories:.1f} Ккал ({grams} г)\n"
+                f"Всего сегодня: {user['logged_calories']:.0f} Ккал\n"
+                f"Цель: {user['calorie_goal']} Ккал\n"
+                f"Осталось: {remaining:.0f} Ккал"
             )
         else:
-            await message.answer(f"✅ Записано: {food_name} — {calories:.1f} ккал")
+            await message.answer(f"Записано: {food_name} — {calories:.1f} Ккал")
         
         await state.clear()
         
@@ -141,7 +128,6 @@ async def process_food_grams(message: Message, state: FSMContext):
 
 @router.message(Command("log_workout"))
 async def cmd_log_workout(message: Message):
-    """Логирование тренировки"""
     try:
         args = message.text.split()
         if len(args) < 3:
@@ -159,23 +145,19 @@ async def cmd_log_workout(message: Message):
             await message.answer("Пожалуйста, введите положительное время тренировки.")
             return
         
-        # Получаем данные пользователя для расчета
         user = await get_user(message.from_user.id)
         if not user:
             await message.answer("Сначала настройте профиль: /set_profile")
             return
         
-        # Рассчитываем сожженные калории
         burned_calories = calculate_workout_calories(
             workout_type,
             duration,
             user['weight']
         )
         
-        # Рассчитываем рекомендацию по воде
         water_recommendation = get_workout_water_recommendation(duration)
         
-        # Логируем тренировку
         await log_workout(
             user_id=message.from_user.id,
             workout_type=workout_type,
@@ -183,11 +165,10 @@ async def cmd_log_workout(message: Message):
             burned_calories=burned_calories
         )
         
-        # Формируем ответ
         response = (
-            f"🏃‍♂️ {workout_type.capitalize()} {duration} минут — {burned_calories} ккал.\n"
-            f"💧 Рекомендуется выпить дополнительно: {water_recommendation} мл воды.\n\n"
-            f"Всего сожжено сегодня: {user['burned_calories'] + burned_calories} ккал"
+            f"{workout_type.capitalize()} {duration} минут — {burned_calories} Ккал.\n"
+            f"Рекомендуется выпить дополнительно: {water_recommendation} мл воды.\n\n"
+            f"Всего сожжено сегодня: {user['burned_calories'] + burned_calories} Ккал"
         )
         
         await message.answer(response)

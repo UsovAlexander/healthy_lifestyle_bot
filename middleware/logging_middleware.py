@@ -1,7 +1,7 @@
 import logging
 from typing import Callable, Dict, Any, Awaitable
 from aiogram import BaseMiddleware
-from aiogram.types import Message
+from aiogram.types import Update, Message, CallbackQuery
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,21 +17,29 @@ logger = logging.getLogger(__name__)
 class LoggingMiddleware(BaseMiddleware):
     async def __call__(
         self,
-        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
-        event: Message,
+        handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
+        event: Update,
         data: Dict[str, Any]
     ) -> Any:
-        user = event.from_user
-        logger.info(
-            f"User: {user.id} (@{user.username}) | "
-            f"Command: {event.text} | "
-            f"Chat: {event.chat.id}"
-        )
+        
+        user = event.message.from_user
+        chat_id = event.message.chat.id
+        text = event.message.text or ""
+        
+        if user:
+            logger.info(
+                f"User: {user.id} (@{user.username}) | "
+                f"Text/Data: {text[:50]} | "
+                f"Chat: {chat_id}"
+            )
+        else:
+            logger.info(f"Update without user: {event.update_id}")
         
         try:
             result = await handler(event, data)
-            logger.info(f"Command {event.text} processed successfully")
+            if text:
+                logger.info(f"Command {text} processed successfully")
             return result
         except Exception as e:
-            logger.error(f"Error processing {event.text}: {e}")
+            logger.error(f"Error processing update: {e}")
             raise
