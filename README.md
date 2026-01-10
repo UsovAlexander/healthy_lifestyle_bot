@@ -170,3 +170,19 @@ COPY . .
 
 CMD ["python", "bot.py"]
 ```
+
+
+Для создания образа
+```
+docker build -t healthy-lifestyle-bot . 
+```
+Для запуска, остановки и удаления контейнера
+```
+docker run -d --name hl-bot --env-file .env healthy-lifestyle-bot
+docker stop hl-bot 
+docker rm -f hl-bot 
+```
+Для просмотра логов
+```
+docker logs hl-bot -f 
+```
