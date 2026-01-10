@@ -1,7 +1,8 @@
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, BufferedInputFile
 from database import get_user
+from services.chart import create_progress_chart
 
 router = Router()
 
@@ -47,6 +48,23 @@ async def cmd_check_progress(message: Message):
         progress_report += "Рекомендации:\n" + recommendations
     
     await message.answer(progress_report)
+
+    try:
+        chart_buf = await create_progress_chart(user)
+
+        await message.answer_photo(
+            BufferedInputFile(
+                chart_buf.read(),
+                filename="progress_chart.png"
+            ),
+            caption="📈 График вашего прогресса"
+        )
+        
+        chart_buf.close()
+        
+    except Exception as e:
+        print(f"Ошибка при создании графика: {e}")
+        await message.answer("⚠️ Не удалось создать график прогресса.")
 
 @router.message(Command("help"))
 async def cmd_help(message: Message):
